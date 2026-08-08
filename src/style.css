@@ -1,14 +1,96 @@
-@import url("https://fonts.cdnfonts.com/css/pp-neue-montreal");
-/* display face for the big hero heading only */
-@import url("https://fonts.googleapis.com/css2?family=Anton&display=swap");
+/* ----- self-hosted type -----
+   Switzer (Fontshare) = the neo-grotesque display face, the closest
+   open match to the Helvetica-Now-style heading in the reference.
+   Space Grotesk (variable) = the squarish technical face for labels,
+   numbers and UI chrome. Both live in /public/assets/fonts. */
+
+@font-face {
+  font-family: "Switzer";
+  src: url("/assets/fonts/switzer-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/assets/fonts/switzer-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Switzer";
+  src: url("/assets/fonts/switzer-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/assets/fonts/space-grotesk-var.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+/* Almarena Neue Display — the user-supplied display face for the big
+   heading and the logo wordmark. Only the weights actually used are
+   registered, so the browser never downloads the rest. */
+@font-face {
+  font-family: "Almarena Neue Display";
+  src: url("/assets/fonts/AlmarenaNeueDisplay-Light-iF66afd734ddfb2.otf")
+    format("opentype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Almarena Neue Display";
+  src: url("/assets/fonts/AlmarenaNeueDisplay-Regular-iF66afd734ef9a2.otf")
+    format("opentype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Almarena Neue Display";
+  src: url("/assets/fonts/AlmarenaNeueDisplay-SemiBold-iF66afd73503c4b.otf")
+    format("opentype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Almarena Neue Display";
+  src: url("/assets/fonts/AlmarenaNeueDisplay-Bold-iF66afd734c41db.otf")
+    format("opentype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Neue Helvetica Paneuropean 43 Extended Light — commercial Monotype
+   font, NOT bundled; resolves only if installed on the machine. Kept
+   in the heading stack behind Almarena as an optional upgrade. */
+@font-face {
+  font-family: "Neue Helvetica Ext";
+  src:
+    local("Neue Helvetica Paneuropean 43 Extended Light"),
+    local("HelveticaNeueLTPaneuropean-43LtEx"),
+    local("Helvetica Neue LT Pro 43 Light Extended"),
+    local("HelveticaNeueLTPro-LtEx");
+  font-weight: 300;
+  font-display: swap;
+}
+/* Archivo variable: width axis 62–125%, weight 100–900. Used at
+   125% width + light weight to stand in for the 43 Extended cut. */
+@font-face {
+  font-family: "Archivo";
+  src: url("/assets/fonts/archivo-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
 
 /* Everything is scoped under .mfa-hero so the component can drop into
    any page without touching (or being touched by) the host's CSS.
-   Palette is derived from the blob's saved reflection studio: deep
-   teal-black ambience, magenta + red glows, blue highlights, amber
-   sparks. Layout: logo/nav/contact bar, big left intro column, the
-   sculpture centre-right, style list on the right edge, info bar at
-   the bottom. */
+
+   Layout (from the reference): a near-black page frame holding two
+   panels — red-lit sculpture stage left, dark silk-smear right — with
+   an overlapping cluster of UI cards floating across the seam:
+   big grotesque headline, action buttons, stat cards, slot meter. */
 
 .mfa-hero,
 .mfa-hero *,
@@ -18,317 +100,624 @@
 }
 
 .mfa-hero {
-  --mfa-bg: #010f13; /* the studio's ambience colour */
-  --mfa-ink: #eef6f7; /* near-white with a cool cast */
-  --mfa-ink-soft: rgba(238, 246, 247, 0.6);
-  --mfa-magenta: #a30078; /* studio fill panel */
-  --mfa-red: #ff2d43; /* softened studio key */
-  --mfa-cyan: #2af8f5; /* studio backdrop accent */
-  --mfa-amber: #ffb545; /* studio strip, the CTA accent */
+  --mfa-frame: #060806; /* page frame behind the panels */
+  --mfa-panel: #0a0c0a;
+  --mfa-ink: #eef6f0; /* cool near-white */
+  --mfa-ink-soft: rgba(238, 246, 240, 0.58);
+  --mfa-line: rgba(238, 246, 240, 0.1); /* hairline borders */
+  --mfa-red: #16e35f; /* the studio key light, now emerald */
+  --mfa-red-deep: #067a2e;
+  /* glass: dark smoked pane the green scene bleeds through, blurred */
+  --mfa-card: rgba(9, 13, 10, 0.52);
+  --mfa-glass-blur: blur(26px) saturate(1.5) brightness(1.06);
+  /* specular sheen falling from the top-left, like light on glass */
+  --mfa-glass-sheen: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.02) 32%,
+    rgba(255, 255, 255, 0) 55%,
+    rgba(30, 255, 120, 0.05) 100%
+  );
+  --mfa-glass-edge:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset -1px -1px 0 rgba(255, 255, 255, 0.03),
+    0 30px 70px -25px rgba(0, 0, 0, 0.65);
+  --mfa-label: "Space Grotesk", system-ui, sans-serif;
 
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   width: 100%;
   height: 100svh;
+  padding: 12px;
   overflow: hidden;
-  background: var(--mfa-bg);
+  background: var(--mfa-frame);
   color: var(--mfa-ink);
-  font-family: "PP Neue Montreal", system-ui, sans-serif;
+  font-family: "Switzer", system-ui, sans-serif;
   isolation: isolate;
 }
 
-/* ----- animated colour wash (WebGL shader, driven by main.js) ----- */
+/* ----- the two framed panels ----- */
 
-.mfa-hero__bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+.mfa-hero__panel {
+  position: relative;
+  z-index: 2; /* above the canvas: borders + grain frame the render */
+  overflow: hidden;
+  border: 1px solid var(--mfa-line);
+  border-radius: 3px;
+  /* the canvas paints the panel interiors; this is only the
+     no-WebGL fallback ground */
+  background: transparent;
 }
 
-/* transparent WebGL canvas floats the sculpture over the wash but
-   under the text; it must never eat clicks */
+/* the single WebGL canvas: backdrop (washes + sculpture) plus the
+   refractive glass composite. Spans the whole hero, never eats clicks. */
 .mfa-hero__canvas {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
-/* ----- top navigation ----- */
+/* film grain over both panels so the gradients read like photography */
+.mfa-hero__panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* the left panel is the logo's viewport: drag to orbit the camera
+   around the mark, wheel to zoom (OrbitControls in main.js) */
+.mfa-hero__panel--left {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.mfa-hero--grabbing .mfa-hero__panel--left {
+  cursor: grabbing;
+}
+
+/* ----- the logo's glass pane -----
+   a flat glass card floating behind the 3D mark, dead centre of the
+   left panel. The WebGL composite draws the real frost/refraction at
+   its rect; CSS keeps the border, brackets and backdrop-filter
+   fallback (same recipe as the cards). pointer-events stay off so
+   orbit drags land on the panel. */
+
+.mfa-hero__logo-pane {
+  /* inset + auto margins centre it without a transform, so the intro
+     tween can scale it freely */
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(58%, 400px);
+  aspect-ratio: 1;
+  z-index: 3;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--mfa-glass-sheen), var(--mfa-card);
+  backdrop-filter: var(--mfa-glass-blur);
+  -webkit-backdrop-filter: var(--mfa-glass-blur);
+  box-shadow: var(--mfa-glass-edge);
+}
+
+/* ----- corner brackets (the [ ] crop marks on cards/buttons) ----- */
+
+.mfa-hero__corner {
+  --c: rgba(244, 241, 238, 0.55);
+  --s: 8px; /* tick length */
+  --w: 1px; /* tick weight */
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c));
+  background-position:
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right;
+  background-size:
+    var(--s) var(--w),
+    var(--w) var(--s),
+    var(--s) var(--w),
+    var(--w) var(--s),
+    var(--s) var(--w),
+    var(--w) var(--s),
+    var(--s) var(--w),
+    var(--w) var(--s);
+  background-repeat: no-repeat;
+  transition: opacity 250ms ease;
+}
+
+/* ----- top-left navigation (over the left panel) ----- */
 
 .mfa-hero__nav {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-  padding: 1.75rem 3rem;
+  gap: 1.1rem;
+  padding: 1.3rem 1.6rem;
+}
+
+.mfa-hero__menu {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mfa-ink);
+  font-family: var(--mfa-label);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.mfa-hero__menu-dots {
+  display: grid;
+  grid-template-columns: repeat(2, 3px);
+  gap: 2.5px;
+  transition: transform 300ms ease;
+}
+
+.mfa-hero__menu:hover .mfa-hero__menu-dots {
+  transform: rotate(90deg);
+}
+
+.mfa-hero__menu-dots i {
+  width: 3px;
+  height: 3px;
+  background: var(--mfa-ink);
+}
+
+.mfa-hero__nav-dash {
+  width: 26px;
+  height: 1px;
+  background: rgba(244, 241, 238, 0.45);
 }
 
 .mfa-hero__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   color: var(--mfa-ink);
-  font-size: 1.05rem;
+  font-family: "Almarena Neue Display", "Switzer", system-ui, sans-serif;
+  font-size: 1.08rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
   text-decoration: none;
   white-space: nowrap;
 }
 
-/* the reference boxes the tail of the wordmark */
-.mfa-hero__logo-box {
-  margin-left: 0.2em;
-  padding: 0.08em 0.35em 0.12em;
-  border: 1.5px solid var(--mfa-amber);
+.mfa-hero__logo sup {
+  margin-left: 0.05em;
+  font-size: 0.55em;
+  font-weight: 500;
 }
 
-.mfa-hero__links {
-  display: flex;
-  gap: 2.5rem;
-}
-
-.mfa-hero__links a {
-  color: var(--mfa-ink);
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  opacity: 0.85;
-  transition:
-    opacity 200ms ease,
-    color 200ms ease;
-}
-
-.mfa-hero__links a:hover {
-  opacity: 1;
-  color: var(--mfa-amber);
-}
-
-.mfa-hero__contact {
-  padding: 0.6rem 1.5rem;
-  border: 1px solid var(--mfa-amber);
-  border-radius: 4px;
-  color: var(--mfa-ink);
-  font-size: 0.9rem;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  transition:
-    background 220ms ease,
-    color 220ms ease;
-}
-
-.mfa-hero__contact:hover {
-  background: var(--mfa-amber);
-  color: #071014;
-}
-
-/* ----- left intro column ----- */
-
-.mfa-hero__intro {
-  position: absolute;
-  top: 50%;
-  left: 3rem;
-  z-index: 3;
-  max-width: 34rem;
-  transform: translateY(-52%);
-}
-
-.mfa-hero__heading {
-  margin: 0;
-  font-family: "Anton", "PP Neue Montreal", system-ui, sans-serif;
-  font-size: clamp(2.8rem, 6.2vw, 5.6rem);
-  font-weight: 400; /* Anton ships one heavy weight */
-  letter-spacing: -0.03em;
-  line-height: 1.04;
-  text-shadow: 0 0 60px rgba(163, 0, 120, 0.5);
-  user-select: none;
-}
-
-.mfa-hero__copy {
-  margin: 1.6rem 0 2.4rem;
-  max-width: 32ch;
+.mfa-hero__logo-tag {
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(244, 241, 238, 0.35);
+  font-family: var(--mfa-label);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--mfa-ink-soft);
-  font-size: 1rem;
-  line-height: 1.55;
 }
 
-/* circular outlined CTA; main.js drives the magnetic pull on the
-   button itself, so the decorative tilt lives on the inner label —
-   the two transforms never fight */
-.mfa-hero__join {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 6.8rem;
-  height: 6.8rem;
-  border: 1px solid rgba(238, 246, 247, 0.55);
-  border-radius: 50%;
-  color: var(--mfa-ink);
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-  will-change: transform;
-  transition:
-    background 250ms ease,
-    border-color 250ms ease;
-}
+/* ----- right panel chrome ----- */
 
-/* initial tilt only — hover straightening and the magnetic pull are
-   both GSAP-driven (main.js), a CSS transition here would fight them */
-.mfa-hero__join-label {
-  display: block;
-  transform: rotate(-14deg);
-}
-
-.mfa-hero__join:hover {
-  background: rgba(255, 181, 69, 0.14);
-  border-color: var(--mfa-amber);
-}
-
-/* ----- right style list ----- */
-
-.mfa-hero__styles {
+.mfa-hero__socials {
   position: absolute;
-  top: 50%;
-  right: 3rem;
-  z-index: 3;
+  top: 1.15rem;
+  right: 1.4rem;
+  z-index: 4;
+  display: flex;
+  gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  transform: translateY(-50%);
-  text-align: left;
 }
 
-.mfa-hero__styles-item {
-  margin: 1.1rem 0;
+.mfa-hero__socials a {
+  display: block;
+  color: var(--mfa-ink);
+  opacity: 0.75;
+  transition:
+    opacity 200ms ease,
+    transform 250ms ease;
 }
 
-.mfa-hero__styles-item a {
-  position: relative;
+.mfa-hero__socials a:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.mfa-hero__socials svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* "SLOTS FOR AUG: ▮▮▮▮▮ 2 LEFT" — first row of the cluster grid,
+   right-aligned above the cards so it can never overlap them */
+.mfa-hero__slots {
+  grid-column: 1 / -1;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 4px;
+  font-family: var(--mfa-label);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.mfa-hero__slots-label {
   color: var(--mfa-ink-soft);
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+}
+
+.mfa-hero__slots-ticks {
+  display: flex;
+  gap: 3px;
+  margin: 0 0.2rem;
+}
+
+.mfa-hero__slots-ticks i {
+  width: 4px;
+  height: 13px;
+  background: var(--mfa-ink);
+}
+
+.mfa-hero__slots-ticks i.is-dim {
+  background: rgba(244, 241, 238, 0.22);
+}
+
+.mfa-hero__scroll {
+  position: absolute;
+  bottom: 1.3rem;
+  right: 1.6rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mfa-ink-soft);
+  font-family: var(--mfa-label);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   text-decoration: none;
   transition: color 200ms ease;
 }
 
-.mfa-hero__styles-item a:hover {
+.mfa-hero__scroll:hover {
   color: var(--mfa-ink);
 }
 
-.mfa-hero__styles-item--active a {
-  color: var(--mfa-ink);
-  font-weight: 500;
+.mfa-hero__scroll svg {
+  width: 13px;
+  height: 13px;
 }
 
-/* bullet marking the active style */
-.mfa-hero__styles-item--active span {
+/* ----- the overlapping card cluster ----- */
+
+.mfa-hero__cluster {
   position: absolute;
   top: 50%;
-  left: -1.1rem;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--mfa-ink);
-  transform: translateY(-50%);
-  box-shadow: 0 0 10px rgba(238, 246, 247, 0.8);
+  left: 40%;
+  right: 4.2%;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1.18fr 0.57fr 0.57fr;
+  gap: 9px;
+  transform: translateY(-53%);
 }
 
-/* ----- bottom info bar ----- */
+.mfa-hero__card {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--mfa-glass-sheen), var(--mfa-card);
+  backdrop-filter: var(--mfa-glass-blur);
+  -webkit-backdrop-filter: var(--mfa-glass-blur);
+  box-shadow: var(--mfa-glass-edge);
+}
 
-.mfa-hero__footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 3;
+/* row 1: one wide card = headline block + rating block */
+.mfa-hero__card--main {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr;
+}
+
+.mfa-hero__title {
+  padding: 2.6rem 2.4rem 2.2rem;
+}
+
+.mfa-hero__heading {
+  margin: 0;
+  font-family:
+    "Almarena Neue Display", "Neue Helvetica Ext", "Archivo", "Switzer",
+    system-ui, sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.9rem);
+  font-weight: 400;
+  font-stretch: 125%; /* no-op on Almarena; keeps the Archivo fallback wide */
+  letter-spacing: -0.06em;
+  line-height: 1.02;
+  user-select: none;
+}
+
+/* each line clips its inner span so GSAP can slide the text up
+   into view */
+.mfa-hero__line {
+  display: block;
+  overflow: hidden;
+}
+
+.mfa-hero__line > span {
+  display: block;
+  will-change: transform;
+}
+
+.mfa-hero__heading sup {
+  font-size: 0.3em;
+  font-weight: 300;
+  letter-spacing: 0;
+  vertical-align: 1.4em;
+}
+
+.mfa-hero__role {
+  margin: 1.1rem 0 0;
+  font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+  font-weight: 400;
+  color: rgba(244, 241, 238, 0.92);
+}
+
+/* rating block, right of the headline */
+.mfa-hero__rating {
+  position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  margin: 10px;
+  padding: 1.1rem 1.2rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  /* a second, slightly milkier pane sitting on the main glass */
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.mfa-hero__avatars {
+  display: flex;
+  margin-bottom: 0.8rem;
+}
+
+/* generated-art stand-ins for member photos: little green-lit orbs */
+.mfa-hero__avatars i {
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid rgba(10, 11, 10, 0.9);
+  margin-left: -6px;
+  background: radial-gradient(
+    circle at 30% 30%,
+    #b9ffd4,
+    #17e35f 45%,
+    #033b16 90%
+  );
+}
+
+.mfa-hero__avatars i:first-child {
+  margin-left: 0;
+}
+
+.mfa-hero__avatars i:nth-child(2) {
+  background: radial-gradient(
+    circle at 65% 25%,
+    #d9ffe6,
+    #0bbf4a 50%,
+    #02290e 92%
+  );
+}
+
+.mfa-hero__avatars i:nth-child(3) {
+  background: radial-gradient(
+    circle at 40% 70%,
+    #8affb6,
+    #078a37 55%,
+    #011c09 95%
+  );
+}
+
+.mfa-hero__avatars i:nth-child(4) {
+  background: radial-gradient(
+    circle at 50% 35%,
+    #c6ffdb,
+    #2bff77 40%,
+    #04471c 90%
+  );
+}
+
+.mfa-hero__rating-count {
+  margin: 0;
+  font-family: var(--mfa-label);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: var(--mfa-ink-soft);
+}
+
+.mfa-hero__rating-count strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-family: "Switzer", system-ui, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--mfa-ink);
+}
+
+.mfa-hero__rating-score {
+  display: flex;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 2.5rem;
-  padding: 1.9rem 3rem;
+  margin-top: auto;
+  padding-top: 1.4rem;
 }
 
-.mfa-hero__footer-left {
-  display: flex;
-  align-items: center;
-  gap: 1.6rem;
+.mfa-hero__rating-score strong {
+  font-size: 2.7rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
 }
 
-.mfa-hero__footer-title {
-  margin: 0 0 0.3rem;
-  font-size: 1rem;
-  font-weight: 700;
+.mfa-hero__rating-score em {
+  font-style: normal;
+  font-size: 0.45em;
+  vertical-align: 1.15em;
 }
 
-.mfa-hero__footer-sub {
-  margin: 0;
+.mfa-hero__bracket {
+  font-family: var(--mfa-label);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--mfa-ink-soft);
-  font-size: 0.75rem;
 }
 
-.mfa-hero__footer-copy {
-  margin: 0;
-  padding-left: 1.6rem;
-  border-left: 1px solid rgba(238, 246, 247, 0.25);
-  max-width: 40ch;
-  color: var(--mfa-ink-soft);
-  font-size: 0.8rem;
-  line-height: 1.5;
+/* row 2, column 1: the two stacked action buttons */
+.mfa-hero__actions {
+  display: grid;
+  gap: 9px;
 }
 
-.mfa-hero__watch {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
+.mfa-hero__btn {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--mfa-glass-sheen), var(--mfa-card);
+  backdrop-filter: var(--mfa-glass-blur);
+  -webkit-backdrop-filter: var(--mfa-glass-blur);
+  box-shadow: var(--mfa-glass-edge);
   color: var(--mfa-ink);
   text-decoration: none;
 }
 
-.mfa-hero__play {
+/* red sheet that swipes up under the label on hover */
+.mfa-hero__btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, var(--mfa-red), #058a38);
+  transform: translateY(102%);
+  transition: transform 420ms cubic-bezier(0.65, 0, 0.25, 1);
+}
+
+.mfa-hero__btn:hover::before {
+  transform: translateY(0);
+}
+
+.mfa-hero__btn-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: none;
-  width: 3.1rem;
-  height: 3.1rem;
-  border-radius: 50%;
-  background: var(--mfa-amber);
-  color: #071014;
-  box-shadow: 0 0 0 5px rgba(255, 181, 69, 0.22);
-  transition: box-shadow 250ms ease;
+  gap: 0.6rem;
+  padding: 1.28rem 1rem;
+  font-family: var(--mfa-label);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
-.mfa-hero__watch:hover .mfa-hero__play {
-  box-shadow: 0 0 0 9px rgba(255, 181, 69, 0.28);
+.mfa-hero__btn-inner svg {
+  width: 13px;
+  height: 13px;
+  transform: rotate(45deg); /* ↑ becomes ↗ */
+  transition: transform 350ms ease;
 }
 
-.mfa-hero__play svg {
-  width: 1.1rem;
-  height: 1.1rem;
-  margin-left: 2px;
+.mfa-hero__btn:hover .mfa-hero__btn-inner svg {
+  transform: rotate(90deg);
 }
 
-.mfa-hero__watch-text strong {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
+.mfa-hero__btn:hover .mfa-hero__corner {
+  opacity: 0;
 }
 
-.mfa-hero__watch-text small {
-  display: block;
-  max-width: 28ch;
+/* row 2, columns 2+3: small stat cards */
+.mfa-hero__card--stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+}
+
+.mfa-hero__card--stat strong {
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+
+.mfa-hero__stat-label {
+  font-family: var(--mfa-label);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  line-height: 1.6;
+  text-transform: uppercase;
   color: var(--mfa-ink-soft);
-  font-size: 0.72rem;
-  line-height: 1.4;
+}
+
+/* ----- WebGL glass mode -----
+   main.js adds .mfa-hero--gl once the renderer is up: the composite
+   shader then owns blur/refraction/tint/sheen, so the CSS glass
+   (a backdrop-filter approximation, kept as fallback) steps aside.
+   Borders, corner brackets and the inset edge light stay in CSS. */
+
+.mfa-hero--gl .mfa-hero__card,
+.mfa-hero--gl .mfa-hero__btn,
+.mfa-hero--gl .mfa-hero__logo-pane {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.mfa-hero--gl .mfa-hero__rating {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* shown instead of the canvas when WebGL is unavailable */
@@ -342,36 +731,46 @@
   margin: 0;
   padding: 2rem;
   color: var(--mfa-ink-soft);
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.6;
   letter-spacing: 0.04em;
   text-align: center;
 }
 
-/* ----- small screens ----- */
+/* ----- small screens: panels stack, the cluster flows below ----- */
 
-@media (max-width: 900px) {
-  .mfa-hero__styles,
-  .mfa-hero__footer-copy {
-    display: none;
-  }
-}
-
-@media (max-width: 720px) {
-  .mfa-hero__nav {
-    padding: 1.25rem 1.5rem;
+@media (max-width: 960px) {
+  .mfa-hero {
+    height: auto;
+    min-height: 100svh;
+    grid-template-columns: 1fr;
+    grid-template-rows: 58svh auto;
+    padding-bottom: 4.5rem;
   }
 
-  .mfa-hero__links {
+  .mfa-hero__panel--right {
     display: none;
   }
 
-  .mfa-hero__intro {
-    left: 1.5rem;
-    right: 1.5rem;
+  .mfa-hero__cluster {
+    position: static;
+    grid-template-columns: 1fr 1fr;
+    transform: none;
   }
 
-  .mfa-hero__footer {
-    padding: 1.25rem 1.5rem;
+  .mfa-hero__card--main {
+    grid-template-columns: 1fr;
+  }
+
+  .mfa-hero__actions {
+    grid-column: 1 / -1;
+  }
+
+  .mfa-hero__title {
+    padding: 1.8rem 1.5rem 1.4rem;
+  }
+
+  .mfa-hero__logo-tag {
+    display: none;
   }
 }
