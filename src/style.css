@@ -1,0 +1,377 @@
+@import url("https://fonts.cdnfonts.com/css/pp-neue-montreal");
+/* display face for the big hero heading only */
+@import url("https://fonts.googleapis.com/css2?family=Anton&display=swap");
+
+/* Everything is scoped under .mfa-hero so the component can drop into
+   any page without touching (or being touched by) the host's CSS.
+   Palette is derived from the blob's saved reflection studio: deep
+   teal-black ambience, magenta + red glows, blue highlights, amber
+   sparks. Layout: logo/nav/contact bar, big left intro column, the
+   sculpture centre-right, style list on the right edge, info bar at
+   the bottom. */
+
+.mfa-hero,
+.mfa-hero *,
+.mfa-hero *::before,
+.mfa-hero *::after {
+  box-sizing: border-box;
+}
+
+.mfa-hero {
+  --mfa-bg: #010f13; /* the studio's ambience colour */
+  --mfa-ink: #eef6f7; /* near-white with a cool cast */
+  --mfa-ink-soft: rgba(238, 246, 247, 0.6);
+  --mfa-magenta: #a30078; /* studio fill panel */
+  --mfa-red: #ff2d43; /* softened studio key */
+  --mfa-cyan: #2af8f5; /* studio backdrop accent */
+  --mfa-amber: #ffb545; /* studio strip, the CTA accent */
+
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--mfa-bg);
+  color: var(--mfa-ink);
+  font-family: "PP Neue Montreal", system-ui, sans-serif;
+  isolation: isolate;
+}
+
+/* ----- animated colour wash (WebGL shader, driven by main.js) ----- */
+
+.mfa-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* transparent WebGL canvas floats the sculpture over the wash but
+   under the text; it must never eat clicks */
+.mfa-hero__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* ----- top navigation ----- */
+
+.mfa-hero__nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.75rem 3rem;
+}
+
+.mfa-hero__logo {
+  color: var(--mfa-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* the reference boxes the tail of the wordmark */
+.mfa-hero__logo-box {
+  margin-left: 0.2em;
+  padding: 0.08em 0.35em 0.12em;
+  border: 1.5px solid var(--mfa-amber);
+}
+
+.mfa-hero__links {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.mfa-hero__links a {
+  color: var(--mfa-ink);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  opacity: 0.85;
+  transition:
+    opacity 200ms ease,
+    color 200ms ease;
+}
+
+.mfa-hero__links a:hover {
+  opacity: 1;
+  color: var(--mfa-amber);
+}
+
+.mfa-hero__contact {
+  padding: 0.6rem 1.5rem;
+  border: 1px solid var(--mfa-amber);
+  border-radius: 4px;
+  color: var(--mfa-ink);
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition:
+    background 220ms ease,
+    color 220ms ease;
+}
+
+.mfa-hero__contact:hover {
+  background: var(--mfa-amber);
+  color: #071014;
+}
+
+/* ----- left intro column ----- */
+
+.mfa-hero__intro {
+  position: absolute;
+  top: 50%;
+  left: 3rem;
+  z-index: 3;
+  max-width: 34rem;
+  transform: translateY(-52%);
+}
+
+.mfa-hero__heading {
+  margin: 0;
+  font-family: "Anton", "PP Neue Montreal", system-ui, sans-serif;
+  font-size: clamp(2.8rem, 6.2vw, 5.6rem);
+  font-weight: 400; /* Anton ships one heavy weight */
+  letter-spacing: -0.03em;
+  line-height: 1.04;
+  text-shadow: 0 0 60px rgba(163, 0, 120, 0.5);
+  user-select: none;
+}
+
+.mfa-hero__copy {
+  margin: 1.6rem 0 2.4rem;
+  max-width: 32ch;
+  color: var(--mfa-ink-soft);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* circular outlined CTA; main.js drives the magnetic pull on the
+   button itself, so the decorative tilt lives on the inner label —
+   the two transforms never fight */
+.mfa-hero__join {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.8rem;
+  height: 6.8rem;
+  border: 1px solid rgba(238, 246, 247, 0.55);
+  border-radius: 50%;
+  color: var(--mfa-ink);
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  will-change: transform;
+  transition:
+    background 250ms ease,
+    border-color 250ms ease;
+}
+
+/* initial tilt only — hover straightening and the magnetic pull are
+   both GSAP-driven (main.js), a CSS transition here would fight them */
+.mfa-hero__join-label {
+  display: block;
+  transform: rotate(-14deg);
+}
+
+.mfa-hero__join:hover {
+  background: rgba(255, 181, 69, 0.14);
+  border-color: var(--mfa-amber);
+}
+
+/* ----- right style list ----- */
+
+.mfa-hero__styles {
+  position: absolute;
+  top: 50%;
+  right: 3rem;
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateY(-50%);
+  text-align: left;
+}
+
+.mfa-hero__styles-item {
+  margin: 1.1rem 0;
+}
+
+.mfa-hero__styles-item a {
+  position: relative;
+  color: var(--mfa-ink-soft);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.mfa-hero__styles-item a:hover {
+  color: var(--mfa-ink);
+}
+
+.mfa-hero__styles-item--active a {
+  color: var(--mfa-ink);
+  font-weight: 500;
+}
+
+/* bullet marking the active style */
+.mfa-hero__styles-item--active span {
+  position: absolute;
+  top: 50%;
+  left: -1.1rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mfa-ink);
+  transform: translateY(-50%);
+  box-shadow: 0 0 10px rgba(238, 246, 247, 0.8);
+}
+
+/* ----- bottom info bar ----- */
+
+.mfa-hero__footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  padding: 1.9rem 3rem;
+}
+
+.mfa-hero__footer-left {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+}
+
+.mfa-hero__footer-title {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mfa-hero__footer-sub {
+  margin: 0;
+  color: var(--mfa-ink-soft);
+  font-size: 0.75rem;
+}
+
+.mfa-hero__footer-copy {
+  margin: 0;
+  padding-left: 1.6rem;
+  border-left: 1px solid rgba(238, 246, 247, 0.25);
+  max-width: 40ch;
+  color: var(--mfa-ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.mfa-hero__watch {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  color: var(--mfa-ink);
+  text-decoration: none;
+}
+
+.mfa-hero__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 50%;
+  background: var(--mfa-amber);
+  color: #071014;
+  box-shadow: 0 0 0 5px rgba(255, 181, 69, 0.22);
+  transition: box-shadow 250ms ease;
+}
+
+.mfa-hero__watch:hover .mfa-hero__play {
+  box-shadow: 0 0 0 9px rgba(255, 181, 69, 0.28);
+}
+
+.mfa-hero__play svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-left: 2px;
+}
+
+.mfa-hero__watch-text strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.mfa-hero__watch-text small {
+  display: block;
+  max-width: 28ch;
+  color: var(--mfa-ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+/* shown instead of the canvas when WebGL is unavailable */
+.mfa-hero__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 2rem;
+  color: var(--mfa-ink-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* ----- small screens ----- */
+
+@media (max-width: 900px) {
+  .mfa-hero__styles,
+  .mfa-hero__footer-copy {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .mfa-hero__nav {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .mfa-hero__links {
+    display: none;
+  }
+
+  .mfa-hero__intro {
+    left: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .mfa-hero__footer {
+    padding: 1.25rem 1.5rem;
+  }
+}

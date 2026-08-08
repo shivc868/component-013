@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>component-013</title>
+    <!-- demo-page styles only; the component itself never touches
+         html/body, so it can't clash with a host site's own CSS -->
+    <style>
+      body {
+        margin: 0;
+        background: #0e0e0e;
+      }
+    </style>
+  </head>
+  <body>
+    <section
+      class="mfa-hero"
+      aria-label="Madeaward — we generate aesthetic pictures"
+    >
+      <!-- animated WebGL colour wash behind everything, palette from the
+           blob's reflection studio -->
+      <canvas class="mfa-hero__bg" aria-hidden="true"></canvas>
+
+      <header class="mfa-hero__nav">
+        <a class="mfa-hero__logo" href="#">
+          MADEFOR<span class="mfa-hero__logo-box">AWARD</span>
+        </a>
+        <nav class="mfa-hero__links" aria-label="Primary">
+          <a href="#">Home</a>
+          <a href="#">Collections</a>
+          <a href="#">Creators</a>
+          <a href="#">About</a>
+        </nav>
+        <a class="mfa-hero__contact" href="#">Contact us</a>
+      </header>
+
+      <!-- the 3D sculpture renders here, transparent, over the wash -->
+      <canvas class="mfa-hero__canvas" aria-hidden="true"></canvas>
+
+      <div class="mfa-hero__intro">
+        <h1 class="mfa-hero__heading">
+          Discover<br />&amp; Collect<br />Digital Art
+        </h1>
+        <p class="mfa-hero__copy">
+          Join our digital art community and get access to a large number of
+          beautiful generated pieces.
+        </p>
+        <a class="mfa-hero__join" href="#">
+          <span class="mfa-hero__join-label">Join Now</span>
+        </a>
+      </div>
+
+      <ul class="mfa-hero__styles">
+        <li class="mfa-hero__styles-item mfa-hero__styles-item--active">
+          <a href="#"><span></span>Silk Fold</a>
+        </li>
+        <li class="mfa-hero__styles-item"><a href="#">Iridescent</a></li>
+        <li class="mfa-hero__styles-item"><a href="#">Chrome Melt</a></li>
+        <li class="mfa-hero__styles-item"><a href="#">Acid Wash</a></li>
+        <li class="mfa-hero__styles-item"><a href="#">Radial Ramp</a></li>
+      </ul>
+
+      <footer class="mfa-hero__footer">
+        <div class="mfa-hero__footer-left">
+          <div class="mfa-hero__footer-head">
+            <p class="mfa-hero__footer-title">Digital Art</p>
+            <p class="mfa-hero__footer-sub">What you should know</p>
+          </div>
+          <p class="mfa-hero__footer-copy">
+            This is a closed community that specializes in generative art
+            processes. Click on play and explore the amazing world.
+          </p>
+        </div>
+        <a class="mfa-hero__watch" href="#">
+          <span class="mfa-hero__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5.5v13l11-6.5z" />
+            </svg>
+          </span>
+          <span class="mfa-hero__watch-text">
+            <strong>Start Watching</strong>
+            <small>Do not lose faith in humanity, humanity is an ocean</small>
+          </span>
+        </a>
+      </footer>
+    </section>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
