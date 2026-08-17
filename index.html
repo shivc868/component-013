@@ -5,8 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MADEFORAWARD® — Digital Art Studio</title>
-    <!-- demo-page styles only; the component itself never touches
-         html/body, so it can't clash with a host site's own CSS -->
+    <!-- demo-page styles only; the component never touches html/body -->
     <style>
       body {
         margin: 0;
@@ -15,21 +14,40 @@
     </style>
   </head>
   <body>
+    <!-- boot loader: counts to 100, then the slats lift away -->
+    <div class="mfa-loader" aria-hidden="true">
+      <div class="mfa-loader__slat"></div>
+      <div class="mfa-loader__slat"></div>
+      <div class="mfa-loader__slat"></div>
+      <div class="mfa-loader__content">
+        <p class="mfa-loader__brand">
+          MADEFORAWARD<sup>®</sup>
+          <span>Digital Art Studio</span>
+        </p>
+        <p class="mfa-loader__status">[ Initialising The Vault ]</p>
+        <div class="mfa-loader__bar"><i></i></div>
+        <strong class="mfa-loader__count">000%</strong>
+      </div>
+    </div>
+
     <section class="mfa-hero" aria-label="Madeforaward — digital art studio">
-      <!-- single WebGL canvas: washes + sculpture render to a texture,
-           then a composite pass draws real refractive glass wherever
-           the UI cards sit (their rects are mirrored in each frame) -->
+      <!-- single WebGL canvas: backdrop pass + glass composite pass -->
       <canvas class="mfa-hero__canvas" aria-hidden="true"></canvas>
 
       <!-- ===== left panel: the orbitable 3D logo ===== -->
       <div class="mfa-hero__panel mfa-hero__panel--left">
-        <!-- the flat glass pane the mark floats in front of; its rect
-             is mirrored into the composite shader like the cards' -->
+        <!-- the flat glass pane the mark floats in front of -->
         <div class="mfa-hero__logo-pane" aria-hidden="true">
           <span class="mfa-hero__corner" aria-hidden="true"></span>
         </div>
         <header class="mfa-hero__nav">
-          <button class="mfa-hero__menu" type="button" aria-label="Open menu">
+          <button
+            class="mfa-hero__menu"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mfa-menu"
+          >
             <span class="mfa-hero__menu-dots" aria-hidden="true">
               <i></i><i></i><i></i><i></i>
             </span>
@@ -41,6 +59,38 @@
             <span class="mfa-hero__logo-tag">Digital Art Studio</span>
           </a>
         </header>
+
+        <!-- dropdown menu: a glass box growing out of the Menu button -->
+        <nav class="mfa-hero__menu-panel" id="mfa-menu" aria-label="Main menu">
+          <span class="mfa-hero__corner" aria-hidden="true"></span>
+          <ul class="mfa-hero__menu-list">
+            <li>
+              <a class="mfa-hero__menu-link" href="#home">
+                <i aria-hidden="true">01</i><span>Home</span>
+              </a>
+            </li>
+            <li>
+              <a class="mfa-hero__menu-link" href="#collections">
+                <i aria-hidden="true">02</i><span>Collections</span>
+              </a>
+            </li>
+            <li>
+              <a class="mfa-hero__menu-link" href="#creators">
+                <i aria-hidden="true">03</i><span>Creators</span>
+              </a>
+            </li>
+            <li>
+              <a class="mfa-hero__menu-link" href="#journal">
+                <i aria-hidden="true">04</i><span>Journal</span>
+              </a>
+            </li>
+            <li>
+              <a class="mfa-hero__menu-link" href="#contact">
+                <i aria-hidden="true">05</i><span>Contact</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
 
       <!-- ===== right panel: dark, silky red smear ===== -->
@@ -76,8 +126,6 @@
 
       <!-- ===== overlapping card cluster ===== -->
       <div class="mfa-hero__cluster">
-        <!-- part of the cluster grid so it can never collide with the
-             cards, whatever the viewport -->
         <p class="mfa-hero__slots">
           <span class="mfa-hero__slots-label">Slots for</span>
           <span class="mfa-hero__slots-month">Aug:</span>
@@ -141,6 +189,7 @@
         </div>
       </div>
     </section>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
