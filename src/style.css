@@ -1,8 +1,4 @@
-/* ----- self-hosted type -----
-   Switzer (Fontshare) = the neo-grotesque display face, the closest
-   open match to the Helvetica-Now-style heading in the reference.
-   Space Grotesk (variable) = the squarish technical face for labels,
-   numbers and UI chrome. Both live in /public/assets/fonts. */
+/* ----- self-hosted type (in /public/assets/fonts) ----- */
 
 @font-face {
   font-family: "Switzer";
@@ -29,9 +25,7 @@
   font-display: swap;
 }
 
-/* Almarena Neue Display — the user-supplied display face for the big
-   heading and the logo wordmark. Only the weights actually used are
-   registered, so the browser never downloads the rest. */
+/* Almarena Neue Display — the display face for the heading and wordmark */
 @font-face {
   font-family: "Almarena Neue Display";
   src: url("/assets/fonts/AlmarenaNeueDisplay-Light-iF66afd734ddfb2.otf")
@@ -61,9 +55,7 @@
   font-display: swap;
 }
 
-/* Neue Helvetica Paneuropean 43 Extended Light — commercial Monotype
-   font, NOT bundled; resolves only if installed on the machine. Kept
-   in the heading stack behind Almarena as an optional upgrade. */
+/* Neue Helvetica 43 Extended Light — not bundled; used only if installed */
 @font-face {
   font-family: "Neue Helvetica Ext";
   src:
@@ -74,8 +66,7 @@
   font-weight: 300;
   font-display: swap;
 }
-/* Archivo variable: width axis 62–125%, weight 100–900. Used at
-   125% width + light weight to stand in for the 43 Extended cut. */
+/* Archivo variable — the wide, light fallback for the heading */
 @font-face {
   font-family: "Archivo";
   src: url("/assets/fonts/archivo-var.woff2") format("woff2");
@@ -85,12 +76,7 @@
 }
 
 /* Everything is scoped under .mfa-hero so the component can drop into
-   any page without touching (or being touched by) the host's CSS.
-
-   Layout (from the reference): a near-black page frame holding two
-   panels — red-lit sculpture stage left, dark silk-smear right — with
-   an overlapping cluster of UI cards floating across the seam:
-   big grotesque headline, action buttons, stat cards, slot meter. */
+   any page without clashing with the host's CSS. */
 
 .mfa-hero,
 .mfa-hero *,
@@ -147,13 +133,11 @@
   overflow: hidden;
   border: 1px solid var(--mfa-line);
   border-radius: 3px;
-  /* the canvas paints the panel interiors; this is only the
-     no-WebGL fallback ground */
+  /* the canvas paints the panel interiors */
   background: transparent;
 }
 
-/* the single WebGL canvas: backdrop (washes + sculpture) plus the
-   refractive glass composite. Spans the whole hero, never eats clicks. */
+/* the single WebGL canvas: backdrop + glass composite */
 .mfa-hero__canvas {
   position: absolute;
   inset: 0;
@@ -175,8 +159,7 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* the left panel is the logo's viewport: drag to orbit the camera
-   around the mark, wheel to zoom (OrbitControls in main.js) */
+/* the left panel is the logo's viewport: drag to orbit, wheel to zoom */
 .mfa-hero__panel--left {
   cursor: grab;
   touch-action: pan-y;
@@ -186,16 +169,10 @@
   cursor: grabbing;
 }
 
-/* ----- the logo's glass pane -----
-   a flat glass card floating behind the 3D mark, dead centre of the
-   left panel. The WebGL composite draws the real frost/refraction at
-   its rect; CSS keeps the border, brackets and backdrop-filter
-   fallback (same recipe as the cards). pointer-events stay off so
-   orbit drags land on the panel. */
+/* ----- the logo's glass pane: a flat card behind the 3D mark ----- */
 
 .mfa-hero__logo-pane {
-  /* inset + auto margins centre it without a transform, so the intro
-     tween can scale it freely */
+  /* centred without a transform, so the intro tween can scale it */
   position: absolute;
   inset: 0;
   margin: auto;
@@ -299,6 +276,69 @@
   background: rgba(244, 241, 238, 0.45);
 }
 
+/* ----- dropdown menu: a smoked-glass box under the Menu button ----- */
+
+.mfa-hero__menu-panel {
+  position: absolute;
+  top: 3.3rem; /* just under the nav row, flush with the button */
+  left: 1.6rem;
+  z-index: 6;
+  min-width: 250px;
+  visibility: hidden; /* revealed by the open timeline */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  background: var(--mfa-glass-sheen), var(--mfa-card);
+  backdrop-filter: var(--mfa-glass-blur);
+  -webkit-backdrop-filter: var(--mfa-glass-blur);
+  box-shadow: var(--mfa-glass-edge);
+}
+
+.mfa-hero__menu-list {
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+}
+
+.mfa-hero__menu-list li + li {
+  border-top: 1px solid var(--mfa-line);
+}
+
+.mfa-hero__menu-link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  padding: 0.78rem 1.15rem;
+  color: var(--mfa-ink);
+  text-decoration: none;
+  font-family: var(--mfa-label);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: background 200ms ease;
+}
+
+.mfa-hero__menu-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.mfa-hero__menu-link i {
+  font-style: normal;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  color: var(--mfa-ink-soft);
+}
+
+.mfa-hero__menu-link:hover i {
+  color: var(--mfa-red);
+}
+
+.mfa-hero__menu-link span {
+  /* reserve the resting width so the scramble can't jitter the row */
+  display: inline-block;
+  min-width: 11ch;
+}
+
 .mfa-hero__logo {
   display: flex;
   align-items: center;
@@ -363,8 +403,7 @@
   display: block;
 }
 
-/* "SLOTS FOR AUG: ▮▮▮▮▮ 2 LEFT" — first row of the cluster grid,
-   right-aligned above the cards so it can never overlap them */
+/* the slot meter: first row of the cluster grid, right-aligned */
 .mfa-hero__slots {
   grid-column: 1 / -1;
   justify-self: end;
@@ -473,8 +512,7 @@
   user-select: none;
 }
 
-/* each line clips its inner span so GSAP can slide the text up
-   into view */
+/* each line clips its span so GSAP can slide the text up */
 .mfa-hero__line {
   display: block;
   overflow: hidden;
@@ -702,11 +740,8 @@
   color: var(--mfa-ink-soft);
 }
 
-/* ----- WebGL glass mode -----
-   main.js adds .mfa-hero--gl once the renderer is up: the composite
-   shader then owns blur/refraction/tint/sheen, so the CSS glass
-   (a backdrop-filter approximation, kept as fallback) steps aside.
-   Borders, corner brackets and the inset edge light stay in CSS. */
+/* ----- WebGL glass mode: with the renderer up, the shader owns the
+   frosting and the CSS fallback steps aside ----- */
 
 .mfa-hero--gl .mfa-hero__card,
 .mfa-hero--gl .mfa-hero__btn,
@@ -718,6 +753,118 @@
 
 .mfa-hero--gl .mfa-hero__rating {
   background: rgba(255, 255, 255, 0.03);
+}
+
+/* ----- boot loader: three slats that lift away before the intro ----- */
+
+.mfa-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  color: #eef6f0;
+  font-family: "Switzer", system-ui, sans-serif;
+}
+
+.mfa-loader__slat {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 33.4%;
+  background: #060806;
+  border-right: 1px solid rgba(238, 246, 240, 0.07);
+}
+
+.mfa-loader__slat:nth-child(1) {
+  left: 0;
+}
+.mfa-loader__slat:nth-child(2) {
+  left: 33.3%;
+}
+.mfa-loader__slat:nth-child(3) {
+  left: 66.6%;
+  border-right: 0;
+}
+
+.mfa-loader__content {
+  position: absolute;
+  inset: 0;
+}
+
+.mfa-loader__brand {
+  position: absolute;
+  top: 1.3rem;
+  left: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  font-family: "Almarena Neue Display", "Switzer", system-ui, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mfa-loader__brand sup {
+  margin-left: 0.05em;
+  font-size: 0.55em;
+  font-weight: 500;
+}
+
+.mfa-loader__brand span {
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(244, 241, 238, 0.35);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(238, 246, 240, 0.58);
+}
+
+.mfa-loader__status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(238, 246, 240, 0.58);
+}
+
+.mfa-loader__bar {
+  position: absolute;
+  top: calc(50% + 2.2rem);
+  left: 50%;
+  width: min(260px, 56vw);
+  height: 1px;
+  transform: translateX(-50%);
+  background: rgba(238, 246, 240, 0.12);
+}
+
+.mfa-loader__bar i {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: #16e35f;
+}
+
+.mfa-loader__count {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 0.6rem;
+  font-family: "Almarena Neue Display", "Switzer", system-ui, sans-serif;
+  font-size: clamp(5rem, 14vw, 11rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(238, 246, 240, 0.35);
+  font-variant-numeric: tabular-nums;
 }
 
 /* shown instead of the canvas when WebGL is unavailable */

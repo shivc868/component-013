@@ -3,32 +3,20 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
-import GUI from "lil-gui";
 import gsap from "gsap";
 
-/* Red-lit "folded silk" sculpture inside the left panel of a
-   split-frame hero, with REAL WebGL glass under the UI cards.
-
-   One canvas, one renderer, two passes:
-     1. backdrop — both panel washes + the sculpture render into a
-        texture (the washes are quads placed over each panel's rect,
-        the sculpture is scissored to the left panel);
-     2. composite — a full-screen shader draws that texture, and
-        wherever a UI card sits (the DOM rects are mirrored into the
-        shader every frame) it refracts, frost-blurs, tints and
-        edge-lights the backdrop like a pane of smoked glass.
-
-   Every knob lives in PARAMS; add #editor to the URL for a live
-   lil-gui panel and a Copy configuration button. */
+/* Split-frame hero: a folded-silk sculpture and two colour washes
+   render into a texture, then a composite shader draws real
+   refractive glass wherever the UI cards sit. */
 
 const PARAMS = {
   // shape — fold geometry, all fed to the vertex shader as uniforms
-  lobeFrequency: 1.01, // how many big lobes wrap the sphere
-  lobeDepth: 0.31, // how far the lobes push in and out
-  ridgeFrequency: 1.36, // density of the fold creases
-  ridgeDepth: 0.25, // how tall the creases stand
-  edgeSharpness: 0.89, // 0.4 = pillowy melt, 3 = crisp ribbon edges
-  shrink: 0.17, // pulls the whole surface inward, keeps it in frame
+  lobeFrequency: 0.2, // how many big lobes wrap the sphere
+  lobeDepth: 0.04, // how far the lobes push in and out
+  ridgeFrequency: 1.12, // density of the fold creases
+  ridgeDepth: 0.31, // how tall the creases stand
+  edgeSharpness: 3.42, // 0.4 = pillowy melt, 3 = crisp ribbon edges
+  shrink: 0.26, // pulls the whole surface inward, keeps it in frame
 
   // motion
   morphSpeed: 0.036, // how fast the folds melt and reform
@@ -42,54 +30,53 @@ const PARAMS = {
   mouseBulgeSize: 0.2, // how wide that swell spreads
   bgMouseFollow: 0.35, // wash glows lean toward the pointer
 
-  // material — green silk chrome
-  baseColor: "#2be368", // tints every reflection
-  metalness: 0.78,
+  // material — deep blue metal, self-shaded (no env reflections)
+  baseColor: "#2432ff", // tints every reflection
+  metalness: 1,
   roughness: 0.12,
-  iridescence: 0.12, // a whisper of oil-slick shift in the folds
-  iridescenceIOR: 1.5,
-  clearcoat: 0.25, // lacquer layer, the glassy top sheen
-  clearcoatRoughness: 0.85,
-  envIntensity: 1.25,
+  iridescence: 0, // a whisper of oil-slick shift in the folds
+  iridescenceIOR: 1,
+  clearcoat: 0, // lacquer layer, the glassy top sheen
+  clearcoatRoughness: 0,
+  envIntensity: 1, // studio reflection strength (0 = unlit black metal)
   exposure: 2.1,
 
   // studio — the coloured softboxes the chrome reflects; on a
   // full-metal surface this IS the paint job
   keyColor: "#00ff55", // big panel, up-left — the hot emerald key
   fillColor: "#7dffb0", // pale mint fill, right
-  backdropColor: "#02180a", // near-black green behind
+  backdropColor: "#d6a9ca", // dusty pink behind
   stripAColor: "#12d94f", // thin strip, low front
   stripBColor: "#ccffde", // thin strip, back-left — pale rim light
-  sparkColor: "#efffF4", // small slash for hot white highlights
+  sparkColor: "#a76c6c", // small slash for dusty-rose highlights
   ambienceColor: "#010704", // studio background wash
 
   // view
-  scale: 0.83,
+  scale: 0.86,
 
   // logo — the GLTF mark in the left panel. Colour/finish follow the
   // model's own exported material: warm amber satin.
   logoColor: "#00d652",
-  logoMetalness: 0.45,
-  logoRoughness: 0.3, // 0 = mirror, 0.3 = satin
+  logoMetalness: 0.75,
+  logoRoughness: 0.34, // 0 = mirror, 0.3 = satin
   logoClearcoat: 0.6, // lacquer layer strength
-  logoClearcoatRoughness: 0.2,
-  logoEnvIntensity: 0.4, // green studio reflections as accent only
+  logoClearcoatRoughness: 0.94,
+  logoEnvIntensity: 1, // studio reflection strength on the mark
   logoScale: 0.63, // multiplier on the auto-fitted size
   logoX: 0, // world-unit offsets from the panel centre
   logoY: 0,
   logoPitch: 0, // standard pose: upright, face-on, star bottom-right
-  logoYaw: 4.5, // faces the far side: cancels the baked 45° + half turn
+  logoYaw: 4.47681469282041, // faces the far side: cancels the baked 45° + half turn
   logoRoll: Math.PI / 2, // flips the mirrored export the right way up
-  logoSway: 0.05, // idle breathing tilt, radians (rides under the orbit)
 
   // glass — the composite pass under the UI cards
-  glassBlur: 11, // frost radius, px
+  glassBlur: 4.5, // frost radius, px
   glassRefract: 14, // how far the image bows near the pane edges, px
   glassChroma: 0.28, // chromatic fringing on the refracted layer
   glassTint: 0.62, // how smoked the pane is
-  glassBrightness: 1.06, // light concentration inside the glass
-  glassSheen: 0.01, // the top-left specular wash (linear space)
-  glassFrost: 0.012, // per-pixel frost grain
+  glassBrightness: 1.18, // light concentration inside the glass
+  glassSheen: 0.028, // the top-left specular wash (linear space)
+  glassFrost: 0.003, // per-pixel frost grain
 
   // left wash — the glow field behind the logo stage
   bgBase: "#081109", // floor colour the glows sit on
@@ -106,8 +93,7 @@ const PARAMS = {
   bgGrain: 0.16,
 };
 
-/* the right panel's silk smear reuses the same wash shader, tuned
-   dark: one crimson streak floating in near-black */
+/* the right panel wash: same shader, tuned dark */
 const RIGHT_WASH = {
   bgBase: "#040504",
   bgColor1: "#00a844",
@@ -134,10 +120,7 @@ const reduceMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)",
 ).matches;
 
-/* WebGL can be unavailable (graphics acceleration disabled, blocklisted
-   GPU, remote desktop). Fail with a visible explanation instead of a
-   silent black stage and an uncaught error. The CSS backdrop-filter
-   glass stays active as the fallback in that case. */
+/* no WebGL: show why instead of a silent black stage */
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -151,9 +134,7 @@ try {
   );
   throw err;
 }
-/* tone mapping is injected into the blob material by hand (so it also
-   applies when rendering into the texture); the composite shader does
-   the final linear → sRGB conversion for everything */
+/* tone mapping is applied in the materials; the composite pass encodes sRGB */
 renderer.toneMapping = THREE.NoToneMapping;
 stage.classList.add("mfa-hero--gl");
 
@@ -174,8 +155,7 @@ const blobScene = new THREE.Scene();
 const blobCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 20);
 blobCamera.position.set(0, 0, 5);
 
-/* resting spot: dead centre of the right panel — the card cluster
-   frosts its upper half through the glass */
+/* resting spot: dead centre of the right panel */
 const BLOB_HOME = { x: 0, y: 0 };
 
 /* ----- logo scene (left panel, drawn sharp on top of the glass) ----- */
@@ -184,9 +164,7 @@ const logoScene = new THREE.Scene();
 const logoCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 20);
 logoCamera.position.set(0, 0, 5);
 
-/* neutral studio lighting for the mark: its amber must stay amber,
-   so white lights carry the shading and the green environment only
-   accents the speculars */
+/* neutral lighting so the mark keeps its own colour */
 const logoKeyLight = new THREE.DirectionalLight(0xffffff, 2.4);
 logoKeyLight.position.set(2, 3, 4);
 logoScene.add(logoKeyLight);
@@ -222,10 +200,11 @@ function rebuildStudio() {
 }
 rebuildStudio();
 
-/* ----- the GLTF logo, floating over the flat glass panel -----
-   logoRig carries position + scale, logoGroup carries the mark's own
-   pose. OrbitControls flies the camera around the rig, so the mark
-   is inspectable from every side. */
+/* with scene.environment set, the scene's intensity wins over the material's */
+blobScene.environmentIntensity = PARAMS.envIntensity;
+logoScene.environmentIntensity = PARAMS.logoEnvIntensity;
+
+/* ----- the GLTF logo: logoRig holds position + scale, logoGroup the pose ----- */
 
 const logoRig = new THREE.Group();
 logoScene.add(logoRig);
@@ -233,8 +212,7 @@ logoScene.add(logoRig);
 const logoGroup = new THREE.Group();
 logoRig.add(logoGroup);
 
-/* same green-lit chrome family as the blob, but high-gloss: mirror
-   roughness under a full lacquer clearcoat */
+/* high-gloss chrome under a lacquer clearcoat */
 const logoMaterial = new THREE.MeshPhysicalMaterial({
   color: PARAMS.logoColor,
   metalness: PARAMS.logoMetalness,
@@ -258,10 +236,7 @@ new GLTFLoader().load(
     const model = gltf.scene;
     model.traverse((node) => {
       if (!node.isMesh) return;
-      /* soften the extrusion edges: exporters split vertices per face
-         (flat shading). Re-weld them and rebuild averaged normals so
-         the shading rolls smoothly over every edge. UVs are dropped —
-         they block welding and pure chrome never samples a texture. */
+      /* re-weld the exporter's split vertices so the shading rolls smoothly */
       let g = node.geometry;
       g.deleteAttribute("normal");
       g.deleteAttribute("uv");
@@ -271,15 +246,12 @@ new GLTFLoader().load(
       node.material = logoMaterial;
     });
 
-    /* normalise: centre on the origin, scale the longest side to a
-       known size so any exported model fits the frame */
+    /* centre on the origin and fit the longest side to the frame */
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     model.position.sub(center);
-    /* a logo is an extrusion: its thinnest dimension is its depth.
-       Turn that axis toward the camera so the mark reads face-on,
-       whatever way it was exported. */
+    /* turn the thinnest axis toward the camera so the mark reads face-on */
     if (size.x < size.y && size.x < size.z) {
       model.rotation.y = Math.PI / 2;
     } else if (size.y < size.x && size.y < size.z) {
@@ -305,8 +277,7 @@ const uniforms = {
   uRidgeAmp: { value: PARAMS.ridgeDepth },
   uEdgeSharp: { value: PARAMS.edgeSharpness },
   uShrink: { value: PARAMS.shrink },
-  /* pointer direction in the mesh's object space; the surface swells
-     toward it (mouseBulge) */
+  /* pointer direction in object space; the surface swells toward it */
   uPointerDir: { value: new THREE.Vector3(0, 0, 1) },
   uBulge: { value: PARAMS.mouseBulge },
   uBulgeSize: { value: PARAMS.mouseBulgeSize },
@@ -324,9 +295,7 @@ const material = new THREE.MeshPhysicalMaterial({
   clearcoatRoughness: PARAMS.clearcoatRoughness,
 });
 
-/* GLSL: Ashima 3D simplex noise + the deformation. The displaced
-   normal is rebuilt by finite differences on the unit sphere, because
-   the noise moves every vertex and the stored normals are meaningless. */
+/* Ashima 3D simplex noise */
 const simplexGLSL = /* glsl */ `
 vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
@@ -400,8 +369,7 @@ float fbm(vec3 p){
   return sum;
 }
 
-/* radial displacement: big lobes + creases whose sharpness is the
-   uEdgeSharp knob (low = pillowy melt, high = crisp ribbon edges) */
+/* radial displacement: big lobes + creases */
 vec3 deform(vec3 p){
   vec3 n = normalize(p);
   float t = uTime;
@@ -430,9 +398,7 @@ vec3 blobNormal(vec3 p){
 }
 `;
 
-/* three's own ACES fit, applied by hand so it works identically when
-   rendering into the backdrop texture (the renderer's tone mapping
-   pass only runs for the default framebuffer) */
+/* ACES fit by hand, so it also applies when rendering into the texture */
 const acesGLSL = /* glsl */ `
 uniform float uExposure;
 vec3 RRTAndODTFit(vec3 v){
@@ -473,8 +439,7 @@ material.onBeforeCompile = (shader) => {
   );
 };
 
-/* the logo draws straight to the screen, which also skips the
-   renderer's tone mapping — inject the same ACES fit */
+/* same fit for the logo, which draws straight to the screen */
 logoMaterial.onBeforeCompile = (shader) => {
   shader.uniforms.uExposure = uniforms.uExposure;
   shader.fragmentShader = acesGLSL + shader.fragmentShader;
@@ -484,16 +449,11 @@ logoMaterial.onBeforeCompile = (shader) => {
   );
 };
 
-/* detail 96 = ~184k triangles: plenty for the low-frequency folds and
-   comfortably 60fps territory on mid-range GPUs */
+/* detail 96 = ~184k triangles */
 const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(1, 96), material);
 blobScene.add(mesh);
 
-/* ----- washes (backdrop pass) -----
-   Each wash is a quad placed over its panel's rect in NDC; the
-   fragment shader drifts four coloured glow spots around and smears
-   them with simplex noise. Output is converted to linear so the
-   whole backdrop texture lives in one colour space. */
+/* ----- washes: a quad per panel, four glow spots smeared by noise ----- */
 
 const washFragment = /* glsl */ `
 precision highp float;
@@ -598,12 +558,8 @@ function createWash(cfg) {
 const leftWash = createWash(PARAMS);
 const rightWash = createWash(RIGHT_WASH);
 
-/* ----- glass composite pass -----
-   Draws the backdrop texture to the screen. Inside each card's rect:
-   refraction (the image bows toward the pane centre near the edges),
-   12-tap rotated-poisson frost blur, a semi-sharp refracted layer
-   with chromatic fringing, smoked tint, top-left specular sheen,
-   inner edge light and frost grain — then the final sRGB encode. */
+/* ----- glass composite: refraction, frost blur, tint and edge light
+   inside each card's rect ----- */
 
 const GLASS_COUNT = 6;
 
@@ -728,9 +684,12 @@ glassScene.add(
   ),
 );
 
+/* the glass pane behind the mark — also the clip box for pass 3 */
+const logoPaneEl = stage.querySelector(".mfa-hero__logo-pane");
+
 /* the DOM elements the shader mirrors */
 const glassEls = [
-  stage.querySelector(".mfa-hero__logo-pane"),
+  logoPaneEl,
   stage.querySelector(".mfa-hero__card--main"),
   ...stage.querySelectorAll(".mfa-hero__btn"),
   ...stage.querySelectorAll(".mfa-hero__card--stat"),
@@ -741,8 +700,7 @@ function updateGlassRects() {
   const dpr = renderer.getPixelRatio();
   glassEls.forEach((el, i) => {
     const r = el.getBoundingClientRect();
-    /* gsap's autoAlpha writes inline opacity/visibility; reading the
-       inline style avoids a forced style recalc every frame */
+    /* read the inline style gsap writes: no forced recalc per frame */
     let a = el.style.opacity === "" ? 1 : parseFloat(el.style.opacity);
     if (el.style.visibility === "hidden") a = 0;
     glassUniforms.uRects.value[i].set(
@@ -757,8 +715,7 @@ function updateGlassRects() {
 
 /* ----- layout: place washes + per-panel viewports ----- */
 
-/* physical px (render-target space) for the blob's scissor,
-   CSS px (renderer.setViewport space) for the logo's screen pass */
+/* physical px for the blob's scissor, CSS px for the logo's screen pass */
 const blobRectPx = { x: 0, y: 0, w: 0, h: 0 };
 const logoRectCss = { x: 0, y: 0, w: 1, h: 1 };
 
@@ -825,9 +782,8 @@ function renderAll() {
   renderer.setClearColor(FRAME_COLOR, 1);
   renderer.render(washScene, ndcCamera); /* autoClear paints the frame */
 
-  /* confine the sculpture to the right panel, under the cards.
-     NB: a render target's viewport/scissor are only read inside
-     setRenderTarget, so it must be re-applied after mutating them. */
+  /* confine the sculpture to the right panel; a target's viewport is
+     only read inside setRenderTarget, so re-apply it after each change */
   if (blobRectPx.w > 0) {
     backdropRT.viewport.set(
       blobRectPx.x,
@@ -856,7 +812,7 @@ function renderAll() {
   renderer.setRenderTarget(null);
   renderer.render(glassScene, ndcCamera);
 
-  /* pass 3: the logo, sharp ON TOP of the left panel's glass frame */
+  /* pass 3: the logo, sharp on top, scissored to its glass pane */
   renderer.autoClear = false;
   renderer.clearDepth();
   renderer.setViewport(
@@ -865,11 +821,13 @@ function renderAll() {
     logoRectCss.w,
     logoRectCss.h,
   );
+  const heroRect = stage.getBoundingClientRect();
+  const paneRect = logoPaneEl.getBoundingClientRect();
   renderer.setScissor(
-    logoRectCss.x,
-    logoRectCss.y,
-    logoRectCss.w,
-    logoRectCss.h,
+    paneRect.left - heroRect.left,
+    heroRect.bottom - paneRect.bottom,
+    paneRect.width,
+    paneRect.height,
   );
   renderer.setScissorTest(true);
   renderer.render(logoScene, logoCamera);
@@ -885,231 +843,6 @@ window.addEventListener("resize", () => {
 });
 resize();
 
-/* ----- editor panel -----
-   dev tool, hidden on the finished page: add #editor to the URL
-   (e.g. localhost:5199/#editor) to tune PARAMS live and copy the
-   configuration. Listens for the hash appearing at any time, so typing
-   it into an already-open tab works without a reload. */
-
-let editorStarted = false;
-
-function initEditor() {
-  if (editorStarted) return;
-  editorStarted = true;
-
-  const CONFIG_KEYS = Object.keys(PARAMS);
-
-  const actions = {
-    copyConfiguration() {
-      const config = {};
-      CONFIG_KEYS.forEach((k) => (config[k] = PARAMS[k]));
-      const json = JSON.stringify(config, null, 2);
-      navigator.clipboard
-        .writeText(json)
-        .then(() => console.log("Blob config copied to clipboard:\n" + json))
-        .catch(() => {
-          /* clipboard can be blocked outside secure contexts; still make
-             the config easy to grab */
-          console.log("Copy this configuration:\n" + json);
-          window.prompt("Copy the configuration below:", json);
-        });
-    },
-  };
-
-  const gui = new GUI({ title: "Blob editor" });
-
-  const shapeFolder = gui.addFolder("Shape");
-  shapeFolder
-    .add(PARAMS, "lobeFrequency", 0.2, 2.5, 0.01)
-    .onChange((v) => (uniforms.uLobeFreq.value = v));
-  shapeFolder
-    .add(PARAMS, "lobeDepth", 0, 1, 0.01)
-    .onChange((v) => (uniforms.uLobeAmp.value = v));
-  shapeFolder
-    .add(PARAMS, "ridgeFrequency", 0.3, 4, 0.01)
-    .onChange((v) => (uniforms.uRidgeFreq.value = v));
-  shapeFolder
-    .add(PARAMS, "ridgeDepth", 0, 1, 0.01)
-    .onChange((v) => (uniforms.uRidgeAmp.value = v));
-  shapeFolder
-    .add(PARAMS, "edgeSharpness", 0.3, 4, 0.01)
-    .onChange((v) => (uniforms.uEdgeSharp.value = v));
-  shapeFolder
-    .add(PARAMS, "shrink", 0, 0.6, 0.01)
-    .onChange((v) => (uniforms.uShrink.value = v));
-  shapeFolder.add(PARAMS, "scale", 0.4, 1.6, 0.01);
-
-  const motionFolder = gui.addFolder("Motion");
-  motionFolder.add(PARAMS, "morphSpeed", 0, 0.3, 0.001);
-  motionFolder.add(PARAMS, "spinSpeed", 0, 0.3, 0.001);
-
-  const mouseFolder = gui.addFolder("Mouse");
-  mouseFolder.add(PARAMS, "mouseFollow", 0, 1.5, 0.01);
-  mouseFolder.add(PARAMS, "mouseEase", 0.01, 0.3, 0.005);
-  mouseFolder.add(PARAMS, "mouseParallax", 0, 1, 0.01);
-  mouseFolder
-    .add(PARAMS, "mouseBulge", 0, 0.6, 0.01)
-    .onChange((v) => (uniforms.uBulge.value = v));
-  mouseFolder
-    .add(PARAMS, "mouseBulgeSize", 0.2, 1.5, 0.01)
-    .onChange((v) => (uniforms.uBulgeSize.value = v));
-  mouseFolder.add(PARAMS, "bgMouseFollow", 0, 1, 0.01).onChange((v) => {
-    leftWash.uniforms.uMouseAmt.value = v;
-    rightWash.uniforms.uMouseAmt.value = v * 0.5;
-  });
-
-  const materialFolder = gui.addFolder("Material");
-  materialFolder
-    .addColor(PARAMS, "baseColor")
-    .onChange((v) => material.color.set(v));
-  materialFolder
-    .add(PARAMS, "metalness", 0, 1, 0.01)
-    .onChange((v) => (material.metalness = v));
-  materialFolder
-    .add(PARAMS, "roughness", 0, 1, 0.01)
-    .onChange((v) => (material.roughness = v));
-  materialFolder
-    .add(PARAMS, "iridescence", 0, 1, 0.01)
-    .onChange((v) => (material.iridescence = v));
-  materialFolder
-    .add(PARAMS, "iridescenceIOR", 1, 2.4, 0.01)
-    .onChange((v) => (material.iridescenceIOR = v));
-  materialFolder
-    .add(PARAMS, "clearcoat", 0, 1, 0.01)
-    .onChange((v) => (material.clearcoat = v));
-  materialFolder
-    .add(PARAMS, "clearcoatRoughness", 0, 1, 0.01)
-    .onChange((v) => (material.clearcoatRoughness = v));
-  materialFolder
-    .add(PARAMS, "envIntensity", 0, 3, 0.01)
-    .onChange((v) => (material.envMapIntensity = v));
-  materialFolder
-    .add(PARAMS, "exposure", 0.2, 2.5, 0.01)
-    .onChange((v) => (uniforms.uExposure.value = v));
-
-  const logoFolder = gui.addFolder("Logo");
-  logoFolder
-    .addColor(PARAMS, "logoColor")
-    .onChange((v) => logoMaterial.color.set(v));
-  logoFolder
-    .add(PARAMS, "logoMetalness", 0, 1, 0.01)
-    .onChange((v) => (logoMaterial.metalness = v));
-  logoFolder
-    .add(PARAMS, "logoRoughness", 0, 1, 0.01)
-    .onChange((v) => (logoMaterial.roughness = v));
-  logoFolder
-    .add(PARAMS, "logoClearcoat", 0, 1, 0.01)
-    .onChange((v) => (logoMaterial.clearcoat = v));
-  logoFolder
-    .add(PARAMS, "logoClearcoatRoughness", 0, 1, 0.01)
-    .onChange((v) => (logoMaterial.clearcoatRoughness = v));
-  logoFolder
-    .add(PARAMS, "logoEnvIntensity", 0, 3, 0.01)
-    .onChange((v) => (logoMaterial.envMapIntensity = v));
-  logoFolder
-    .add(PARAMS, "logoScale", 0.3, 2, 0.01)
-    .onChange(applyLogoTransform);
-  logoFolder.add(PARAMS, "logoX", -1.5, 1.5, 0.01).onChange(applyLogoTransform);
-  logoFolder.add(PARAMS, "logoY", -1.5, 1.5, 0.01).onChange(applyLogoTransform);
-  logoFolder.add(PARAMS, "logoPitch", -Math.PI, Math.PI, 0.01).onChange(() => {
-    if (reduceMotion) applyStaticLogoPose();
-  });
-  logoFolder
-    .add(PARAMS, "logoYaw", -Math.PI * 2, Math.PI * 2, 0.01)
-    .onChange(() => {
-      if (reduceMotion) applyStaticLogoPose();
-    });
-  logoFolder.add(PARAMS, "logoRoll", -Math.PI, Math.PI, 0.01).onChange(() => {
-    if (reduceMotion) applyStaticLogoPose();
-  });
-  logoFolder.add(PARAMS, "logoSway", 0, 0.25, 0.005);
-
-  const glassFolder = gui.addFolder("Glass");
-  glassFolder
-    .add(PARAMS, "glassBlur", 0, 30, 0.5)
-    .onChange((v) => (glassUniforms.uBlur.value = v));
-  glassFolder
-    .add(PARAMS, "glassRefract", 0, 40, 0.5)
-    .onChange((v) => (glassUniforms.uRefract.value = v));
-  glassFolder
-    .add(PARAMS, "glassChroma", 0, 1.5, 0.01)
-    .onChange((v) => (glassUniforms.uChroma.value = v));
-  glassFolder
-    .add(PARAMS, "glassTint", 0, 1, 0.01)
-    .onChange((v) => (glassUniforms.uTint.value = v));
-  glassFolder
-    .add(PARAMS, "glassBrightness", 0.5, 2, 0.01)
-    .onChange((v) => (glassUniforms.uBrightness.value = v));
-  glassFolder
-    .add(PARAMS, "glassSheen", 0, 0.05, 0.001)
-    .onChange((v) => (glassUniforms.uSheen.value = v));
-  glassFolder
-    .add(PARAMS, "glassFrost", 0, 0.05, 0.001)
-    .onChange((v) => (glassUniforms.uFrost.value = v));
-
-  const studioFolder = gui.addFolder("Reflection colors");
-  [
-    "keyColor",
-    "fillColor",
-    "backdropColor",
-    "stripAColor",
-    "stripBColor",
-    "sparkColor",
-    "ambienceColor",
-  ].forEach((key) =>
-    studioFolder.addColor(PARAMS, key).onChange(rebuildStudio),
-  );
-
-  const bgFolder = gui.addFolder("Left wash");
-  bgFolder
-    .addColor(PARAMS, "bgBase")
-    .onChange((v) => leftWash.uniforms.uBase.value.set(v));
-  bgFolder
-    .addColor(PARAMS, "bgColor1")
-    .onChange((v) => leftWash.uniforms.uC1.value.set(v));
-  bgFolder
-    .addColor(PARAMS, "bgColor2")
-    .onChange((v) => leftWash.uniforms.uC2.value.set(v));
-  bgFolder
-    .addColor(PARAMS, "bgColor3")
-    .onChange((v) => leftWash.uniforms.uC3.value.set(v));
-  bgFolder
-    .addColor(PARAMS, "bgColor4")
-    .onChange((v) => leftWash.uniforms.uC4.value.set(v));
-  bgFolder
-    .add(PARAMS, "bgSpeed", 0, 0.6, 0.005)
-    .onChange((v) => (leftWash.uniforms.uSpeed.value = v));
-  bgFolder
-    .add(PARAMS, "bgScale", 0.4, 3, 0.01)
-    .onChange((v) => (leftWash.uniforms.uScale.value = v));
-  bgFolder
-    .add(PARAMS, "bgWarp", 0, 2.5, 0.01)
-    .onChange((v) => (leftWash.uniforms.uWarp.value = v));
-  bgFolder
-    .add(PARAMS, "bgBrightness", 0, 2, 0.01)
-    .onChange((v) => (leftWash.uniforms.uBrightness.value = v));
-  bgFolder
-    .add(PARAMS, "bgSpotSize", 0.2, 2, 0.01)
-    .onChange((v) => (leftWash.uniforms.uSpotSize.value = v));
-  bgFolder
-    .add(PARAMS, "bgVignette", 0, 1, 0.01)
-    .onChange((v) => (leftWash.uniforms.uVignette.value = v));
-  bgFolder
-    .add(PARAMS, "bgGrain", 0, 0.2, 0.005)
-    .onChange((v) => (leftWash.uniforms.uGrain.value = v));
-
-  gui.add(actions, "copyConfiguration").name("📋 Copy configuration");
-
-  /* in reduced-motion mode there is no render loop, so paint one frame
-     after any edit */
-  if (reduceMotion) gui.onChange(() => renderAll());
-}
-
-if (window.location.hash === "#editor") initEditor();
-window.addEventListener("hashchange", () => {
-  if (window.location.hash === "#editor") initEditor();
-});
-
 /* ----- interaction ----- */
 
 const pointer = { x: 0, y: 0 };
@@ -1118,9 +851,7 @@ window.addEventListener("pointermove", (e) => {
   pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
 });
 
-/* ----- orbit control -----
-   the left panel is the mark's viewport: drag to fly the camera
-   around the logo, wheel/pinch to zoom. Damped so it glides. */
+/* ----- orbit control: drag the left panel to fly around the mark ----- */
 
 function applyStaticLogoPose() {
   logoGroup.rotation.set(PARAMS.logoPitch, PARAMS.logoYaw, PARAMS.logoRoll);
@@ -1131,6 +862,7 @@ const orbit = new OrbitControls(logoCamera, leftPanel);
 orbit.enableDamping = true;
 orbit.dampingFactor = 0.06;
 orbit.enablePan = false;
+/* single-screen page again: the wheel is free for zooming the mark */
 orbit.minDistance = 2.2;
 orbit.maxDistance = 9;
 orbit.target.set(PARAMS.logoX, PARAMS.logoY, 0);
@@ -1146,9 +878,115 @@ leftPanel.addEventListener("pointerup", () =>
 /* no render loop in reduced-motion mode: paint per orbit change */
 if (reduceMotion) orbit.addEventListener("change", renderAll);
 
-/* magnetic buttons: while hovering, the button leans toward the
-   cursor; on leave it springs home with an elastic wobble. The glass
-   in the shader follows because the rects are re-measured per frame. */
+/* ----- dropdown menu: a glass box growing out of the Menu button ----- */
+
+const menuBtn = stage.querySelector(".mfa-hero__menu");
+const menuPanel = stage.querySelector(".mfa-hero__menu-panel");
+const menuLinks = [...menuPanel.querySelectorAll(".mfa-hero__menu-link")];
+
+/* keep nav pointerdowns from OrbitControls: its pointer capture
+   would swallow the button's click */
+[stage.querySelector(".mfa-hero__nav"), menuPanel].forEach((el) =>
+  el.addEventListener("pointerdown", (e) => e.stopPropagation()),
+);
+let menuOpen = false;
+let menuTl = null;
+
+function openMenu() {
+  menuOpen = true;
+  menuBtn.setAttribute("aria-expanded", "true");
+  if (menuTl) menuTl.kill();
+  if (reduceMotion) {
+    gsap.set(menuPanel, { autoAlpha: 1, clipPath: "inset(0% 0% 0% 0%)" });
+    gsap.set(menuLinks, { autoAlpha: 1, y: 0 });
+    return;
+  }
+  menuTl = gsap
+    .timeline({ defaults: { ease: "power4.out" } })
+    .set(menuPanel, { autoAlpha: 1 })
+    .fromTo(
+      menuPanel,
+      { clipPath: "inset(0% 100% 100% 0%)" },
+      { clipPath: "inset(0% 0% 0% 0%)", duration: 0.55 },
+    )
+    .fromTo(
+      menuLinks,
+      { y: 16, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.07 },
+      "-=0.3",
+    );
+}
+
+function closeMenu() {
+  menuOpen = false;
+  menuBtn.setAttribute("aria-expanded", "false");
+  if (menuTl) menuTl.kill();
+  if (reduceMotion) {
+    gsap.set(menuPanel, { autoAlpha: 0 });
+    return;
+  }
+  menuTl = gsap
+    .timeline({ defaults: { ease: "power3.in" } })
+    .to(menuLinks, { y: -10, autoAlpha: 0, duration: 0.25, stagger: 0.035 })
+    .to(
+      menuPanel,
+      { clipPath: "inset(0% 100% 100% 0%)", duration: 0.4 },
+      "-=0.15",
+    )
+    .set(menuPanel, { autoAlpha: 0 });
+}
+
+menuBtn.addEventListener("click", (e) => {
+  e.stopPropagation(); /* keep the document listener from re-closing */
+  menuOpen ? closeMenu() : openMenu();
+});
+menuLinks.forEach((link) => link.addEventListener("click", closeMenu));
+document.addEventListener("click", (e) => {
+  if (menuOpen && !menuPanel.contains(e.target)) closeMenu();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && menuOpen) closeMenu();
+});
+
+/* label scramble on hover/focus */
+
+const SCRAMBLE_GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%&";
+
+menuLinks.forEach((link) => {
+  const label = link.querySelector("span");
+  const original = label.textContent;
+  let scrambleTween = null;
+
+  const scramble = () => {
+    if (reduceMotion) return;
+    if (scrambleTween) scrambleTween.kill();
+    const state = { p: 0 };
+    scrambleTween = gsap.to(state, {
+      p: 1,
+      duration: 0.6,
+      ease: "none",
+      onUpdate() {
+        const locked = Math.floor(state.p * original.length);
+        let text = "";
+        for (let i = 0; i < original.length; i++) {
+          text +=
+            i < locked || original[i] === " "
+              ? original[i]
+              : SCRAMBLE_GLYPHS[(Math.random() * SCRAMBLE_GLYPHS.length) | 0];
+        }
+        label.textContent = text;
+      },
+      onComplete() {
+        label.textContent = original; /* always land on the real label */
+      },
+    });
+  };
+
+  link.addEventListener("mouseenter", scramble);
+  link.addEventListener("focus", scramble);
+});
+
+/* magnetic buttons: lean toward the cursor, spring home on leave */
 if (!reduceMotion) {
   stage.querySelectorAll(".mfa-hero__btn").forEach((btn) => {
     const inner = btn.querySelector(".mfa-hero__btn-inner");
@@ -1180,10 +1018,7 @@ if (!reduceMotion) {
   });
 }
 
-/* ----- stat counters -----
-   every [data-count] ticks from 0 to its value during the intro;
-   integers get thousands separators ("1,300+"), data-decimals handles
-   the 4.9 rating. */
+/* ----- stat counters: every [data-count] ticks up during the intro ----- */
 
 function animateCounters() {
   stage.querySelectorAll("[data-count]").forEach((el) => {
@@ -1208,9 +1043,11 @@ function animateCounters() {
 
 /* ----- intro ----- */
 
+const loader = document.querySelector(".mfa-loader");
+
 if (reduceMotion) {
-  /* one still frame, mid-morph so the folds are fully formed;
-     no from-tweens ran, so all content is simply visible */
+  loader.remove(); /* no boot sequence, straight to the still page */
+  /* one still frame, mid-morph so the folds are fully formed */
   uniforms.uTime.value = 8 * PARAMS.morphSpeed;
   leftWash.uniforms.uTime.value = 40;
   rightWash.uniforms.uTime.value = 40;
@@ -1226,9 +1063,9 @@ if (reduceMotion) {
     });
   }
 } else {
-  /* choreography: panels iris open → chrome fades in → headline lines
-     slide up → cards and counters land → slot meter ticks on */
-  const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
+  /* intro: panels iris open → chrome → headline → cards → slot meter.
+     Paused; the boot loader plays it once the slats lift. */
+  const tl = gsap.timeline({ paused: true, defaults: { ease: "power4.out" } });
 
   tl.from(".mfa-hero__panel", {
     clipPath: "inset(50% 0% 50% 0%)",
@@ -1279,7 +1116,42 @@ if (reduceMotion) {
     )
     .from(".mfa-hero__scroll", { y: 10, autoAlpha: 0, duration: 0.6 }, "-=0.3");
 
-  animateCounters();
+  /* ----- boot loader: count to 100, lift the slats, start the intro ----- */
+  const bootProgress = { v: 0 };
+  const countEl = loader.querySelector(".mfa-loader__count");
+  const barEl = loader.querySelector(".mfa-loader__bar i");
+
+  gsap
+    .timeline({ defaults: { ease: "power4.inOut" } })
+    .from([".mfa-loader__brand", ".mfa-loader__status", ".mfa-loader__bar"], {
+      y: -12,
+      autoAlpha: 0,
+      duration: 0.55,
+      stagger: 0.08,
+      ease: "power3.out",
+    })
+    .to(
+      bootProgress,
+      {
+        v: 100,
+        duration: 2.1,
+        ease: "power2.inOut",
+        onUpdate() {
+          const v = Math.round(bootProgress.v);
+          countEl.textContent = String(v).padStart(3, "0") + "%";
+          barEl.style.transform = `scaleX(${v / 100})`;
+        },
+      },
+      "<",
+    )
+    .to(".mfa-loader__content", { autoAlpha: 0, duration: 0.4, ease: "power2.in" }, "+=0.15")
+    .to(".mfa-loader__slat", { yPercent: -100, duration: 0.85, stagger: 0.09 }, "-=0.1")
+    .add(() => {
+      /* the intro starts while the last slat is still leaving */
+      tl.play();
+      animateCounters();
+    }, "-=0.35")
+    .add(() => loader.remove());
 
   /* scroll cue chevron: a slow idle bob */
   gsap.to(".mfa-hero__scroll svg", {
@@ -1292,7 +1164,7 @@ if (reduceMotion) {
   });
 
   const clock = new THREE.Clock();
-  /* eased copy of the raw pointer; mouseEase sets how lazily it trails */
+  /* eased copy of the raw pointer */
   const smooth = { x: 0, y: 0 };
   const pointerDir = new THREE.Vector3();
   const invQuat = new THREE.Quaternion();
@@ -1311,18 +1183,12 @@ if (reduceMotion) {
     mesh.rotation.z +=
       (smooth.x * -PARAMS.mouseFollow - mesh.rotation.z) * 0.05;
 
-    /* home under the cards + positional parallax (screen y is
-       inverted vs world y) */
+    /* home position + parallax (screen y is inverted vs world y) */
     mesh.position.x = BLOB_HOME.x + smooth.x * PARAMS.mouseParallax;
     mesh.position.y = BLOB_HOME.y - smooth.y * PARAMS.mouseParallax;
 
-    /* the mark rests at its home pose with a slow breathing sway; the
-       camera is what moves (OrbitControls damping needs a per-frame
-       update) */
+    /* the mark holds its pose; only the camera moves */
     applyStaticLogoPose();
-    const t = leftWash.uniforms.uTime.value;
-    logoGroup.rotation.x += Math.sin(t * 0.8) * PARAMS.logoSway * 0.6;
-    logoGroup.rotation.y += Math.sin(t * 0.55) * PARAMS.logoSway;
     orbit.update();
 
     /* pointer direction into the mesh's own space for the bulge */
